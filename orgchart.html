@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Chart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {}
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Organization Chart</h1>
+                    <p class="text-gray-600">Company structure and team hierarchy</p>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Search employees..."
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+                        />
+                    </div>
+                    
+                    <!-- Actions -->
+                    <button id="expandAll" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Expand All
+                    </button>
+                    <button id="collapseAll" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Collapse All
+                    </button>
+                    <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span>Add Employee</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Org Chart -->
+        <div class="bg-white rounded-lg shadow-sm border p-8" style="overflow-x: auto; overflow-y: visible; scroll-behavior: auto;">
+            <h2 class="text-lg font-semibold text-gray-900 mb-8 text-center">Organizational Structure</h2>
+            <div class="flex justify-center min-w-max pb-8" id="orgChart">
+                <!-- Organization chart will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Organization data
+        let orgData = {
+            id: 'ceo',
+            name: 'Sarah Johnson',
+            title: 'Chief Executive Officer',
+            department: 'Executive',
+            email: 'sarah.johnson@company.com',
+            phone: '+1 (555) 123-4567',
+            location: 'New York, NY',
+            avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+            expanded: true,
+            children: [
+                {
+                    id: 'cto',
+                    name: 'Michael Chen',
+                    title: 'Chief Technology Officer',
+                    department: 'Technology',
+                    email: 'michael.chen@company.com',
+                    phone: '+1 (555) 123-4568',
+                    location: 'San Francisco, CA',
+                    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+                    expanded: true,
+                    children: [
+                        {
+                            id: 'eng-mgr-1',
+                            name: 'Emily Rodriguez',
+                            title: 'Engineering Manager',
+                            department: 'Engineering',
+                            email: 'emily.rodriguez@company.com',
+                            phone: '+1 (555) 123-4569',
+                            location: 'Austin, TX',
+                            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+                            expanded: false,
+                            children: [
+                                {
+                                    id: 'dev-1',
+                                    name: 'Alex Thompson',
+                                    title: 'Senior Developer',
+                                    department: 'Engineering',
+                                    email: 'alex.thompson@company.com',
+                                    phone: '+1 (555) 123-4570',
+                                    location: 'Austin, TX',
+                                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                                    children: []
+                                },
+                                {
+                                    id: 'dev-2',
+                                    name: 'Jessica Kim',
+                                    title: 'Frontend Developer',
+                                    department: 'Engineering',
+                                    email: 'jessica.kim@company.com',
+                                    phone: '+1 (555) 123-4571',
+                                    location: 'Remote',
+                                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+                                    children: []
+                                },
+                                {
+                                    id: 'dev-3',
+                                    name: 'Ryan Martinez',
+                                    title: 'Backend Developer',
+                                    department: 'Engineering',
+                                    email: 'ryan.martinez@company.com',
+                                    phone: '+1 (555) 123-4572',
+                                    location: 'Austin, TX',
+                                    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+                                    children: []
+                                }
+                            ]
+                        },
+                        {
+                            id: 'dev-ops',
+                            name: 'David Park',
+                            title: 'DevOps Manager',
+                            department: 'Engineering',
+                            email: 'david.park@company.com',
+                            phone: '+1 (555) 123-4572',
+                            location: 'Seattle, WA',
+                            avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face',
+                            expanded: false,
+                            children: [
+                                {
+                                    id: 'devops-1',
+                                    name: 'Anna Wilson',
+                                    title: 'DevOps Engineer',
+                                    department: 'Engineering',
+                                    email: 'anna.wilson@company.com',
+                                    phone: '+1 (555) 123-4573',
+                                    location: 'Seattle, WA',
+                                    avatar: 'https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=150&h=150&fit=crop&crop=face',
+                                    children: []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'cmo',
+                    name: 'Lisa Wang',
+                    title: 'Chief Marketing Officer',
+                    department: 'Marketing',
+                    email: 'lisa.wang@company.com',
+                    phone: '+1 (555) 123-4573',
+                    location: 'Los Angeles, CA',
+                    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face',
+                    expanded: true,
+                    children: [
+                        {
+                            id: 'marketing-mgr',
+                            name: 'James Wilson',
+                            title: 'Marketing Manager',
+                            department: 'Marketing',
+                            email: 'james.wilson@company.com',
+                            phone: '+1 (555) 123-4574',
+                            location: 'Los Angeles, CA',
+                            avatar: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?w=150&h=150&fit=crop&crop=face',
+                            expanded: true,
+                            children: [
+                                {
+                                    id: 'content-spec',
+                                    name: 'Sophie Martinez',
+                                    title: 'Content Specialist',
+                                    department: 'Marketing',
+                                    email: 'sophie.martinez@company.com',
+                                    phone: '+1 (555) 123-4575',
+                                    location: 'Miami, FL',
+                                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face',
+                                    children: []
+                                },
+                                {
+                                    id: 'social-mgr',
+                                    name: 'Tom Brown',
+                                    title: 'Social Media Manager',
+                                    department: 'Marketing',
+                                    email: 'tom.brown@company.com',
+                                    phone: '+1 (555) 123-4576',
+                                    location: 'Los Angeles, CA',
+                                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                                    children: []
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'hr-dir',
+                    name: 'Robert Johnson',
+                    title: 'HR Director',
+                    department: 'Human Resources',
+                    email: 'robert.johnson@company.com',
+                    phone: '+1 (555) 123-4576',
+                    location: 'Chicago, IL',
+                    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+                    expanded: false,
+                    children: [
+                        {
+                            id: 'recruiter',
+                            name: 'Maria Garcia',
+                            title: 'Senior Recruiter',
+                            department: 'Human Resources',
+                            email: 'maria.garcia@company.com',
+                            phone: '+1 (555) 123-4577',
+                            location: 'Chicago, IL',
+                            avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face',
+                            children: []
+                        }
+                    ]
+                }
+            ]
+        };
+
+        let searchTerm = '';
+        let animatingNodes = new Set();
+
+        // Utility functions
+        function getDepartmentColor(department) {
+            switch (department) {
+                case 'Executive': return 'bg-purple-500';
+                case 'Technology':
+                case 'Engineering': return 'bg-blue-500';
+                case 'Marketing': return 'bg-green-500';
+                case 'Human Resources': return 'bg-orange-500';
+                default: return 'bg-gray-500';
+            }
+        }
+
+        function searchInTree(node, term) {
+            if (!term) return true;
+            const searchText = term.toLowerCase();
+            return (
+                node.name.toLowerCase().includes(searchText) ||
+                node.title.toLowerCase().includes(searchText) ||
+                node.department.toLowerCase().includes(searchText) ||
+                (node.children && node.children.some(child => searchInTree(child, term)))
+            );
+        }
+
+        // Toggle expansion functionality
+        function toggleExpansion(nodeId) {
+            const container = document.querySelector('[style*="overflow-x"]');
+            const scrollTop = container ? container.scrollTop : 0;
+            const scrollLeft = container ? container.scrollLeft : 0;
+
+            animatingNodes.add(nodeId);
+
+            function updateNode(node) {
+                if (node.id === nodeId) {
+                    return { ...node, expanded: !node.expanded };
+                }
+                if (node.children) {
+                    return {
+                        ...node,
+                        children: node.children.map(updateNode)
+                    };
+                }
+                return node;
+            }
+
+            orgData = updateNode(orgData);
+
+            const restoreScroll = () => {
+                if (container) {
+                    container.scrollTop = scrollTop;
+                    container.scrollLeft = scrollLeft;
+                }
+            };
+
+            renderOrgChart();
+            
+            requestAnimationFrame(restoreScroll);
+            setTimeout(restoreScroll, 50);
+            
+            setTimeout(() => {
+                animatingNodes.delete(nodeId);
+            }, 800);
+        }
+
+        // Expand all nodes
+        function expandAll() {
+            function expandNode(node) {
+                return {
+                    ...node,
+                    expanded: true,
+                    children: node.children ? node.children.map(expandNode) : []
+                };
+            }
+            orgData = expandNode(orgData);
+            renderOrgChart();
+        }
+
+        // Collapse all nodes
+        function collapseAll() {
+            function collapseNode(node) {
+                return {
+                    ...node,
+                    expanded: false,
+                    children: node.children ? node.children.map(collapseNode) : []
+                };
+            }
+            orgData = collapseNode(orgData);
+            renderOrgChart();
+        }
+
+        // Create employee card HTML
+        function createEmployeeCard(employee, isRoot = false) {
+            if (!searchInTree(employee, searchTerm)) return '';
+
+            const hasChildren = employee.children && employee.children.length > 0;
+            const isExpanded = employee.expanded;
+            const hasVisibleChildren = hasChildren && employee.children.some(child => searchInTree(child, searchTerm));
+            const isAnimating = animatingNodes.has(employee.id);
+
+            const visibleChildren = hasChildren ? employee.children.filter(child => searchInTree(child, searchTerm)) : [];
+
+            return `
+                <div class="flex flex-col items-center">
+                    <!-- Employee Card -->
+                    <div class="bg-white rounded-lg shadow-md border p-4 transition-all duration-300 hover:shadow-xl relative hover:scale-105 ${isRoot ? 'w-72' : 'w-64'}">
+                        ${hasVisibleChildren ? `
+                            <button onclick="toggleExpansion('${employee.id}')" class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-white border-2 border-blue-400 rounded-full p-2 hover:bg-blue-50 shadow-lg z-20 transition-all duration-200 hover:scale-110">
+                                <div class="transition-transform duration-500 ${isExpanded ? 'rotate-0' : '-rotate-90'}">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </button>
+                        ` : ''}
+
+                        <div class="text-center">
+                            <img src="${employee.avatar || '/api/placeholder/60/60'}" alt="${employee.name}" 
+                                class="w-16 h-16 rounded-full object-cover border-4 border-gray-200 mx-auto mb-3 transition-all duration-300 hover:border-blue-300" 
+                                onerror="this.src='/api/placeholder/60/60'"/>
+                            
+                            <h3 class="font-semibold text-gray-900 text-sm mb-1 leading-tight">${employee.name}</h3>
+                            <p class="text-xs text-gray-600 mb-2 leading-tight">${employee.title}</p>
+                            
+                            <div class="flex justify-center mb-2">
+                                <span class="text-xs px-2 py-1 rounded-full text-white transition-all duration-200 ${getDepartmentColor(employee.department)}">
+                                    ${employee.department}
+                                </span>
+                            </div>
+
+                            <div class="text-xs text-gray-500 space-y-1">
+                                <div class="flex items-center justify-center space-x-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span class="truncate">${employee.email.split('@')[0]}</span>
+                                </div>
+                                ${employee.location ? `
+                                    <div class="flex items-center justify-center space-x-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        <span>${employee.location.split(',')[0]}</span>
+                                    </div>
+                                ` : ''}
+                                ${hasChildren ? `
+                                    <div class="flex items-center justify-center space-x-1 pt-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                        </svg>
+                                        <span>${employee.children.length} report${employee.children.length !== 1 ? 's' : ''}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    ${hasVisibleChildren ? `
+                        <!-- Animated Connector Line -->
+                        <div class="w-px bg-gray-400 transition-all duration-500 ease-out ${isExpanded ? 'h-6 opacity-100' : 'h-0 opacity-0'}"></div>
+
+                        <!-- Animated Children Container -->
+                        <div class="relative overflow-hidden transition-all duration-700 ease-in-out ${isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}" 
+                             style="max-height: ${isExpanded ? '2000px' : '0px'}">
+                            <div class="transition-all duration-500 ease-out ${isExpanded ? 'transform translate-y-0' : 'transform -translate-y-8'}">
+                                ${visibleChildren.length > 1 ? `
+                                    <!-- Horizontal Connector Line -->
+                                    <div class="absolute top-6 left-1/2 h-px bg-gray-400 transition-all duration-600 ease-out ${isExpanded ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}"
+                                         style="width: ${(visibleChildren.length - 1) * 280}px; transform: translateX(-${((visibleChildren.length - 1) * 280) / 2}px); transition-delay: ${isExpanded ? '200ms' : '0ms'}"></div>
+                                ` : ''}
+                                
+                                <!-- Children Grid -->
+                                <div class="flex justify-center space-x-6 pt-0">
+                                    ${visibleChildren.map((child, index) => `
+                                        <div class="flex flex-col items-center relative transition-all duration-700 ease-out ${isExpanded ? 'opacity-100 transform translate-y-0 scale-100' : 'opacity-0 transform translate-y-12 scale-90'}"
+                                             style="transition-delay: ${isExpanded ? `${300 + index * 100}ms` : '0ms'}">
+                                            <!-- Vertical Connector -->
+                                            <div class="w-px bg-gray-400 transition-all duration-500 ease-out ${isExpanded ? 'h-6 opacity-100' : 'h-0 opacity-0'}"
+                                                 style="transition-delay: ${isExpanded ? `${250 + index * 50}ms` : '0ms'}"></div>
+                                            
+                                            <!-- Child Card -->
+                                            ${createEmployeeCard(child)}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Render the organization chart
+        function renderOrgChart() {
+            const orgChartContainer = document.getElementById('orgChart');
+            orgChartContainer.innerHTML = createEmployeeCard(orgData, true);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial render
+            renderOrgChart();
+
+            // Search functionality
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                searchTerm = e.target.value;
+                renderOrgChart();
+            });
+
+            // Expand/Collapse buttons
+            document.getElementById('expandAll').addEventListener('click', expandAll);
+            document.getElementById('collapseAll').addEventListener('click', collapseAll);
+        });
+    </script>
+</body>
+</html>
