@@ -8,7 +8,32 @@
     <script>
         tailwind.config = {
             theme: {
-                extend: {}
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out forwards',
+                        'fade-out': 'fadeOut 0.4s ease-in forwards',
+                        'slide-down': 'slideDown 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-in forwards'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px) scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
+                        },
+                        fadeOut: {
+                            '0%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+                            '100%': { opacity: '0', transform: 'translateY(-10px) scale(0.95)' }
+                        },
+                        slideDown: {
+                            '0%': { opacity: '0', maxHeight: '0', transform: 'translateY(-20px)' },
+                            '100%': { opacity: '1', maxHeight: '2000px', transform: 'translateY(0)' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '1', maxHeight: '2000px', transform: 'translateY(0)' },
+                            '100%': { opacity: '0', maxHeight: '0', transform: 'translateY(-20px)' }
+                        }
+                    }
+                }
             }
         }
     </script>
@@ -239,6 +264,7 @@
 
         let searchTerm = '';
         let animatingNodes = new Set();
+        let fadeAnimations = new Map(); // Track fade animation states
 
         // Utility functions
         function getDepartmentColor(department) {
@@ -263,44 +289,80 @@
             );
         }
 
-        // Toggle expansion functionality
+        // Toggle expansion functionality with enhanced fade animations
         function toggleExpansion(nodeId) {
             const container = document.querySelector('[style*="overflow-x"]');
             const scrollTop = container ? container.scrollTop : 0;
             const scrollLeft = container ? container.scrollLeft : 0;
 
-            animatingNodes.add(nodeId);
+            // Get current node state before update
+            const currentNode = findNodeById(orgData, nodeId);
+            const wasExpanded = currentNode ? currentNode.expanded : false;
 
-            function updateNode(node) {
-                if (node.id === nodeId) {
-                    return { ...node, expanded: !node.expanded };
-                }
-                if (node.children) {
-                    return {
-                        ...node,
-                        children: node.children.map(updateNode)
-                    };
-                }
-                return node;
+            animatingNodes.add(nodeId);
+            
+            // Set animation state
+            fadeAnimations.set(nodeId, {
+                isAnimating: true,
+                isExpanding: !wasExpanded,
+                startTime: Date.now()
+            });
+
+            // Add smooth fade-out effect before state change
+            const nodeElement = document.querySelector(`[data-node-id="${nodeId}"] .children-container`);
+            if (nodeElement && wasExpanded) {
+                nodeElement.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+                nodeElement.style.opacity = '0';
+                nodeElement.style.transform = 'translateY(-10px) scale(0.98)';
             }
 
-            orgData = updateNode(orgData);
-
-            const restoreScroll = () => {
-                if (container) {
-                    container.scrollTop = scrollTop;
-                    container.scrollLeft = scrollLeft;
-                }
-            };
-
-            renderOrgChart();
-            
-            requestAnimationFrame(restoreScroll);
-            setTimeout(restoreScroll, 50);
-            
+            // Delay the state update to allow fade-out animation
             setTimeout(() => {
-                animatingNodes.delete(nodeId);
-            }, 800);
+                function updateNode(node) {
+                    if (node.id === nodeId) {
+                        return { ...node, expanded: !node.expanded };
+                    }
+                    if (node.children) {
+                        return {
+                            ...node,
+                            children: node.children.map(updateNode)
+                        };
+                    }
+                    return node;
+                }
+
+                orgData = updateNode(orgData);
+
+                const restoreScroll = () => {
+                    if (container) {
+                        container.scrollTop = scrollTop;
+                        container.scrollLeft = scrollLeft;
+                    }
+                };
+
+                renderOrgChart();
+                
+                requestAnimationFrame(restoreScroll);
+                setTimeout(restoreScroll, 50);
+                
+                // Clean up animation state
+                setTimeout(() => {
+                    animatingNodes.delete(nodeId);
+                    fadeAnimations.delete(nodeId);
+                }, 1000);
+            }, wasExpanded ? 300 : 0); // Delay only for collapse (fade-out)
+        }
+        
+        // Helper function to find node by ID
+        function findNodeById(node, targetId) {
+            if (node.id === targetId) return node;
+            if (node.children) {
+                for (let child of node.children) {
+                    const found = findNodeById(child, targetId);
+                    if (found) return found;
+                }
+            }
+            return null;
         }
 
         // Expand all nodes
@@ -397,30 +459,36 @@
                     </div>
 
                     ${hasVisibleChildren ? `
-                        <!-- Animated Connector Line -->
-                        <div class="w-px bg-gray-400 transition-all duration-500 ease-out ${isExpanded ? 'h-6 opacity-100' : 'h-0 opacity-0'}"></div>
+                        <!-- Animated Connector Line with Enhanced Fade -->
+                        <div class="w-px bg-gray-400 transition-all duration-600 ease-out ${isExpanded ? 'h-6 opacity-100' : 'h-0 opacity-0'}" 
+                             style="transition-delay: ${isExpanded ? '100ms' : '0ms'}"></div>
 
-                        <!-- Animated Children Container -->
-                        <div class="relative overflow-hidden transition-all duration-700 ease-in-out ${isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}" 
-                             style="max-height: ${isExpanded ? '2000px' : '0px'}">
-                            <div class="transition-all duration-500 ease-out ${isExpanded ? 'transform translate-y-0' : 'transform -translate-y-8'}">
+                        <!-- Enhanced Animated Children Container -->
+                        <div class="children-container relative overflow-hidden transition-all duration-800 ease-in-out ${isExpanded ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}" 
+                             data-node-id="${employee.id}"
+                             style="max-height: ${isExpanded ? '2000px' : '0px'}; transition-delay: ${isExpanded ? '150ms' : '0ms'}">
+                            <div class="transition-all duration-600 ease-out ${isExpanded ? 'transform translate-y-0 opacity-100' : 'transform -translate-y-12 opacity-0'}" 
+                                 style="transition-delay: ${isExpanded ? '250ms' : '0ms'}">
                                 ${visibleChildren.length > 1 ? `
-                                    <!-- Horizontal Connector Line -->
-                                    <div class="absolute top-6 left-1/2 h-px bg-gray-400 transition-all duration-600 ease-out ${isExpanded ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}"
-                                         style="width: ${(visibleChildren.length - 1) * 280}px; transform: translateX(-${((visibleChildren.length - 1) * 280) / 2}px); transition-delay: ${isExpanded ? '200ms' : '0ms'}"></div>
+                                    <!-- Horizontal Connector Line with Staggered Animation -->
+                                    <div class="absolute top-6 left-1/2 h-px bg-gray-400 transition-all duration-700 ease-out ${isExpanded ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}"
+                                         style="width: ${(visibleChildren.length - 1) * 280}px; transform: translateX(-${((visibleChildren.length - 1) * 280) / 2}px); transition-delay: ${isExpanded ? '400ms' : '0ms'}"></div>
                                 ` : ''}
                                 
-                                <!-- Children Grid -->
+                                <!-- Children Grid with Enhanced Fade Animations -->
                                 <div class="flex justify-center space-x-6 pt-0">
                                     ${visibleChildren.map((child, index) => `
-                                        <div class="flex flex-col items-center relative transition-all duration-700 ease-out ${isExpanded ? 'opacity-100 transform translate-y-0 scale-100' : 'opacity-0 transform translate-y-12 scale-90'}"
-                                             style="transition-delay: ${isExpanded ? `${300 + index * 100}ms` : '0ms'}">
-                                            <!-- Vertical Connector -->
-                                            <div class="w-px bg-gray-400 transition-all duration-500 ease-out ${isExpanded ? 'h-6 opacity-100' : 'h-0 opacity-0'}"
-                                                 style="transition-delay: ${isExpanded ? `${250 + index * 50}ms` : '0ms'}"></div>
+                                        <div class="flex flex-col items-center relative transition-all duration-800 ease-out ${isExpanded ? 'opacity-100 transform translate-y-0 scale-100' : 'opacity-0 transform translate-y-16 scale-95'}"
+                                             style="transition-delay: ${isExpanded ? `${400 + index * 120}ms` : `${index * 50}ms`}; transition-property: opacity, transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);">
+                                            <!-- Vertical Connector with Enhanced Animation -->
+                                            <div class="w-px bg-gray-400 transition-all duration-600 ease-out ${isExpanded ? 'h-6 opacity-100' : 'h-0 opacity-0'}"
+                                                 style="transition-delay: ${isExpanded ? `${350 + index * 80}ms` : `${index * 30}ms`}"></div>
                                             
-                                            <!-- Child Card -->
-                                            ${createEmployeeCard(child)}
+                                            <!-- Child Card with Bounce Effect -->
+                                            <div class="transition-all duration-700 ease-out ${isExpanded ? 'transform scale-100' : 'transform scale-95'}"
+                                                 style="transition-delay: ${isExpanded ? `${450 + index * 100}ms` : '0ms'}">
+                                                ${createEmployeeCard(child)}
+                                            </div>
                                         </div>
                                     `).join('')}
                                 </div>
